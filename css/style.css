@@ -1,0 +1,12 @@
+.titulo{
+	text-align: center;
+	position: relative;
+	
+}
+.frmNuevo{
+	transition: all 1s ease-in-out;
+}
+.clientes,.productos,.factura{
+	width: 100%;
+	position: relative;
+}
