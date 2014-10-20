@@ -68,18 +68,18 @@ class Cliente extends MyActiveRecord{
 		   			<td>".$result['nombre_clie']."</td>
 		   			<td>".$result['numero_clie']."</td>
 		   			<td>".$result['email_clie']."</td>
-		   			<td><a id='eli' href='?id=".$result['id']."'>Eliminar</a></td>
+		   			<td><a id='eli' href='?clid=".$result['id']."'>Eliminar</a></td>
 		 		</tr>";
 		}
 	}
-	function nuevoRegistro(){
+	function nuevoCliente(){
 		$nombre = $_POST['boxNombre'];
 					$numero = $_POST['boxNumero'];
 					$email = $_POST['boxEmail'];
 		$cl = MyActiveRecord::Create('Cliente', array('nombre_clie'=>$nombre, 'numero_clie'=>$numero, 'email_clie'=>$email));
 		$cl->save();
 	}
-	function eliminarRegistro($id){
+	function eliminarCliente($id){
 		$del = MyActiveRecord::FindById('cliente', $id);
 		if(!$del){
 			echo 'No existe ';
@@ -102,8 +102,34 @@ class Producto extends MyActiveRecord
 		   			<td>".$result['id']."</td>
 		   			<td>".$result['nombre_prod']."</td>
 		   			<td>".$result['detalle_prod']."</td>
+		   			<td><a id='eli' href='?prid=".$result['id']."'>Eliminar</a></td>
 		 		</tr>";
 		}
+	}
+	function nuevoProducto(){
+		$pr = MyActiveRecord::Create('Producto', 
+			array('nombre_prod'=>''.$_POST["boxNombre"].'', 
+				  'detalle_prod'=>''.$_POST["boxDetalle"].''));
+		$pr->save();
+	}
+	function eliminarProducto($id){
+		$sql = "
+			DELETE * FROM producto
+			INNER JOIN cliente
+			ON factura.id_clie = cliente.id 
+			INNER JOIN producto
+			on factura.id_prod = producto.id
+			WHERE factura.id = '".$id."'";
+		MyActiveRecord::Query($sql);
+
+		//$del = MyActiveRecord::FindById('producto', $id);
+		/*if(!$del){
+			echo 'No existe ';
+		}else{
+			$del->destroy($id);
+			return $del;
+		}*/
+		
 	}
 }
 //CLASS TABLES - FACTURA
@@ -131,19 +157,46 @@ class Factura extends MyActiveRecord{
 		 		</tr>";
 		}
 	}
+	function nuevaFactura(){
+		$pr = MyActiveRecord::Create('Factura', 
+			/*array('id_clie'=>''.$_POST["boxNombre"].'', 
+				  'id_prod'=>''.$_POST["boxDetalle"].''));*/
+		array('id_clie'=>'2', 
+				  'id_prod'=>'1'));
+		$pr->save();
+	}
+	function eliminarFactura($id){
+		$del = MyActiveRecord::FindById('factura', $id);
+		if(!$del){
+			echo 'No existe ';
+		}else{
+			$del->destroy($id);
+			return $del;
+		}
+		
+	}
 }
 //INSTANCE OBJECTS
 $data_cliente = new Cliente();
 $data_producto = new Producto();
 $data_factura = new Factura();
 //DELETE REGISTERS
-if(isset($_GET['id'])) {
-	$id = $_GET['id'];
+if(isset($_GET['clid'])) {
+	$id = $_GET['clid'];
 	if(!$id){
 		echo 'No existe ';
 	}else{
-		$data_cliente->eliminarRegistro($id);	
+		$data_cliente->eliminarCliente($id);	
 		header('Location: index.php');
+	}
+}
+if(isset($_GET['prid'])) {
+	$id = $_GET['prid'];
+	if(!$id){
+		echo 'No existe ';
+	}else{
+		$data_producto->eliminarProducto($id);	
+		//header('Location: index.php');
 	}
 }
 ?>
@@ -159,64 +212,16 @@ if(isset($_GET['id'])) {
 			<link rel="stylesheet" href="css/style.css">
 			<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 			<script src="js/bootstrap.js"></script>
-			<script>
-			$(function(){
-				$('.nuevoCliente').on('click', function(){
-					var formulario = '<div class="frmNuevo"> '+
-								'<div class="message"></div> '+ 
-								'<div class="form-group"> '+ 
-									'<form action="index.php" method="post" name="frmCliente"> '+
-										'<input type="text" placeholder="Nombre" class="form-control txtNombre" name="boxNombre">'+
-										'<input type="text" placeholder="Numero" class="form-control txtNumero" name="boxNumero">'+
-										'<input type="email" placeholder="Correo" class="form-control txtEmail" name="boxEmail">'+
-										'<input type="submit" class="btn btn-info btnGuardar" value="Guardar" name="btnGuardar">'+
-										'<button class="btnCancelar btn btn-warning">Cancelar</button>'+
-									'</form>'+
-								'</div>'+
-							'</div>';
-					//Remove form
-					$('.clientes').append(formulario);
-					//validation
-					if(!$('.frmNuevo').length == 0){
-						$('.btnGuardar').on('click', function(){
-							if($('.txtNombre').val() == "" && $('.txtNumero').val() == '' && $('.txtEmail').val() == ''){
-								$('.message').html('<h3 class="text-center" style="color:red;">Debe llenar todos los campos</h3>');
-								return false;
-							}else if($('.txtNombre').val() == "" || $('.txtNumero').val() == '' || $('.txtEmail').val() == '')
-							{
-								$('.message').html('<h3 class="text-center" style="color:red;">Faltan algunos campos por llenar</h3>');
-								return false;
-							}else{
-								return true;
-							}
-						});
-					}
-					if($('.btnCancelar').length == 0){
-						$('.btnCancelar').on('click',function(){
-							$('.clientes').remove();
-							$('btnCancelar').off('click');
-						});
-					}
-					
-				});
-			});
-
-			</script>
+			<script src="js/functions.js"></script>
 	</head>
 	<body>
 		<?php 
-		if(isset($_POST['btnGuardar'])){
+		if(isset($_POST['btnGuardarClie'])){
 			//CREATE REGISTERS
-			$cl = MyActiveRecord::Create('Cliente', 
-				array('nombre_clie'=>''.$_POST["boxNombre"].'', 
-					  'numero_clie'=>''.$_POST["boxNumero"].'',
-					  'email_clie'=>''.$_POST["boxEmail"].''));
-			$cl->save();
-			header('Location: index.php');
-			if(!$cl->save() == true){
-				echo 'PROBLEMAS AL GUARDAR LOS DATOS';
-			}
+			$data_cliente->nuevoCliente();
+			//header('Location: index.php');
 		}?>
+		<div class="frm"></div>
 		<div class="clientes">
 			<h1 class="titulo">Listado de clientes</h1>
 			<div class="nuevoCliente btn btn-primary"><i class="glyphicon glyphicon-plus"></i></div>
@@ -226,7 +231,7 @@ if(isset($_GET['id'])) {
 					<th class="success">NOMBRE.</th>
 					<th class="success">NUMERO.</th>
 					<th class="success">CORREO.</th>
-					<th class="success">--.</th>
+					<th class="success">ACCION</th>
 				</tr>
 				<tr>
 					<?php 
@@ -238,17 +243,10 @@ if(isset($_GET['id'])) {
 		<hr>
 		<div class="productos">
 			<?php 
-			if(isset($_POST['btnGuardar'])){
+			if(isset($_POST['btnGuardarPro'])){
 				//CREATE REGISTERS
-				$cl = MyActiveRecord::Create('Cliente', 
-					array('nombre_clie'=>''.$_POST["boxNombre"].'', 
-						  'numero_clie'=>''.$_POST["boxNumero"].'',
-						  'email_clie'=>''.$_POST["boxEmail"].''));
-				$cl->save();
-				header('Location: index.php');
-				if(!$cl->save() == true){
-					echo 'PROBLEMAS AL GUARDAR LOS DATOS';
-				}
+				$data_producto->nuevoProducto();
+				//header('Location: index.php');
 			}?>
 			<h1 class="titulo">Listado de productos</h1>
 			<div class="nuevoProducto btn btn-primary"><i class="glyphicon glyphicon-plus"></i></div>
@@ -257,6 +255,7 @@ if(isset($_GET['id'])) {
 					<th class="success">ID.</th>
 					<th class="success">NOMBRE.</th>
 					<th class="success">DETALLE.</th>
+					<th class="success">ACCION.</th>
 				</tr>
 				<?php $data_producto->mostrarDatos(); ?>
 			</table>
@@ -264,6 +263,11 @@ if(isset($_GET['id'])) {
 		<hr>
 		<div class="factura">
 			<h1 class="titulo">Listado de factura</h1>
+			<!--<div class="nuevoFactura btn btn-primary"><i class="glyphicon glyphicon-plus"></i></div>-->
+			<?php
+				//$data_factura->nuevaFactura();
+				//$data_factura->eliminarFactura(10);
+			?>
 			<table class="table table-bordered table-hover">
 				<tr>
 					<th class="success">NO. FAC</th>
